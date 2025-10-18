@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { Hono } from "hono";
 import { sign, verify } from "hono/jwt";
+import { hashpass, comparepass } from "../hashing/hashingPassword"; 
 
 export const userRouter = new Hono<{
     Bindings: {
@@ -16,21 +17,36 @@ userRouter.post('/signup', async (c) => {
   }).$extends(withAccelerate());
 
   const body = await c.req.json();
-
-  try{
-    const user = await prisma.user.create({
-    data: {
-      email: body.email,
-      password: body.password
+  
+  try {
+    const finduser = await prisma.user.findFirst({
+      where: {
+        email: body.email
+      },
+    });
+    if(finduser) {
+      c.status(411);
+      return c.json({ message: 'User already exists' })
     }
-  })
+
+    const userPassword = await hashpass(body.password)
+    console.log(userPassword)
+
+    const user = await prisma.user.create({
+      data: {
+        email: body.email,
+        name: body.name,
+        password: userPassword
+      }
+    })
     const token = await sign({ id: user.id }, c.env.JWT_SECRET)
     return c.json({ jwt: token })
-  } catch(e){
-    c.status(411)
-    return c.text("Invalid")
-  }
 
+  } catch (error) {
+    c.status(403);
+    console.log(error)
+    return c.text("Error")
+  }
 })
   
 userRouter.post('/signin', async(c) => {
@@ -40,25 +56,29 @@ userRouter.post('/signin', async(c) => {
 
   const body = await c.req.json()
 
-  const user = await prisma.user.findFirst({
-    where: {
-      email: body.email
-     }
-   })
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        email: body.email
+      }
+    })
 
     if (!user) {
       c.status(411)
       return c.json({ message: 'User does not exist' })
     }
-     
-    if(user.password == body.password){
-        const token = await sign({ id: user.id }, c.env.JWT_SECRET)
-        return c.json({ jwt: token })
-    } else {
-        c.status(403)
-        return c.json({
-            message: "Wrong Password"
-        })
-    }
     
+    const checkUser = await comparepass(body.password, user.password);
+    if(!checkUser){
+      c.status(403)
+      return c.json({ message: 'Invalid password' })
+    }
+
+    const { password, ...rest } = user;
+    const token = await sign({ id: user.id }, c.env.JWT_SECRET)
+    return c.json({ jwt: token, user: rest })
+    
+  } catch (error) {
+    return c.status(403);
+    }
 })
