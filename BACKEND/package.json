@@ -7,7 +7,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
-    "@abhinavsahotra/blog-common": "^2.0.0",
+    "@abhinavsahotra/blog-common": "^2.1.0",
     "@prisma/client": "^6.17.1",
     "@prisma/extension-accelerate": "^2.0.2",
     "bcrypt": "^6.0.0",
