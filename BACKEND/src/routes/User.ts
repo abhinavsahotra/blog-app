@@ -3,6 +3,7 @@ import { withAccelerate } from "@prisma/extension-accelerate";
 import { Hono } from "hono";
 import { sign, verify } from "hono/jwt";
 import { hashpass, comparepass } from "../hashing/hashingPassword"; 
+import { signupInput, signinInput } from "@abhinavsahotra/blog-common/dist/SignValidation"
 
 export const userRouter = new Hono<{
     Bindings: {
@@ -17,6 +18,11 @@ userRouter.post('/signup', async (c) => {
   }).$extends(withAccelerate());
 
   const body = await c.req.json();
+  const { success } = signupInput.safeParse(body);
+  if(!success) {
+    c.status(411);
+    return c.json({ message: 'Invalid input' })
+  }
   
   try {
     const finduser = await prisma.user.findFirst({
@@ -55,6 +61,11 @@ userRouter.post('/signin', async(c) => {
   }).$extends(withAccelerate());
 
   const body = await c.req.json()
+   const { success } = signinInput.safeParse(body);
+  if (!success) {
+    c.status(411)
+    return c.json({ message: 'Invalid input' })
+  }
 
   try {
     const user = await prisma.user.findFirst({
