@@ -1,0 +1,18 @@
+{
+  "name": "@abhinavsahotra/blog-common",
+  "version": "2.0.0",
+  "main": "dist/index.js",
+  "dependencies": {
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
